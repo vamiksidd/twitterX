@@ -3,9 +3,12 @@ const router = express.Router()
 import {
     userLogIn,
     userLogOut,
-    userSignUp
+    userSignUp,
+    getUser
 } from '../controllers/authController.js'
+import { protectedRoute } from "../middleware/protectedRoute.js";
 
+router.get("/getuser", protectedRoute, getUser)
 
 router.post('/signup', userSignUp)
 
