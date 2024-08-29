@@ -119,10 +119,12 @@ const likeUnlikePost = async (req, res) => {
                 }
             } else {
                 // Create a new notification if none exists
+                const currentUser = await User.findById(userId);
                 notification = new Notification({
                     from: userId,
                     to: post.user,
                     type: 'like',
+                    message: `${currentUser.username} liked your post.`
                 });
                 await notification.save()
             }
