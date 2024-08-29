@@ -78,18 +78,12 @@ const followUnfollowUser = async (req, res) => {
             //notification
             let notification = await Notification.findOne({ type: "follow", to: userToModify._id });
 
-            if (notification) {
-                // Update existing notification
-                notification.from.push(req.user._id);
-                notification.message = `You have new followers: ${notification.from.length} people.`;
-            } else {
-                // Create a new notification
-                notification = new Notification({
-                    type: "follow",
-                    from: [req.user._id],
-                    to: userToModify._id,
-                });
-            }
+            notification = new Notification({
+                from: [req.user._id],
+                to: userToModify._id,
+                type: "follow",
+            });
+
 
             await notification.save();
             res.status(200).json({ message: "User followed successfully" });
