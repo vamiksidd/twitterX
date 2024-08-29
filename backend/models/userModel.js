@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    ling: {
+    link: {
         type: String,
         default: ""
     }
