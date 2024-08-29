@@ -86,61 +86,46 @@ const commentOnPost = async (req, res) => {
 }
 
 const likeUnlikePost = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { id: postId } = req.params;
+	try {
+		const userId = req.user._id;
+		const { id: postId } = req.params;
 
-        const post = await Post.findById(postId)
-        if (!post) {
-            return res.status(404).json({ error: "Post not found" })
-        }
+		const post = await Post.findById(postId);
 
-        const isPostAlreadyLiked = post.likes.includes(userId);
-        if (isPostAlreadyLiked) {
-            //unlike Post
-            await Post.updateOne({ _id: postId }, { $pull: { likes: userId } })
-            await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } })
-            return res.status(200).json({ message: "Post unliked" })
-        } else {
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
 
-            post.likes.push(userId)
-            await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } })
+		const userLikedPost = post.likes.includes(userId);
 
-            await post.save()
-            // Find existing like notification for the post's owner
-            let notification = await Notification.findOne({ userId: post.userId, postId, type: 'like' });
+		if (userLikedPost) {
+			// Unlike post
+			await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
+			await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
 
-            if (notification) {
-                // If notification already exists, update it
-                const likeCount = post.likes.length;
-                if (likeCount > 3) {
-                    notification.message = `Your post has been liked by ${likeCount} people.`;
-                } else {
-                    // List all users who liked the post if the count is low
-                    const usernames = post.likes.map(like => like.userId).join(', ');
-                    notification.message = `${usernames} liked your post.`;
-                }
-            } else {
-                // Create a new notification if none exists
-                const currentUser = await User.findById(userId);
-                notification = new Notification({
-                    from: userId,
-                    to: post.user,
-                    type: 'like',
-                    message: `${currentUser.username} liked your post.`
-                });
-                await notification.save()
-            }
-            return res.status(200).json({ message: "Post liked" })
-        }
+			const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
+			res.status(200).json(updatedLikes);
+		} else {
+			// Like post
+			post.likes.push(userId);
+			await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
+			await post.save();
 
+			const notification = new Notification({
+				from: userId,
+				to: post.user,
+				type: "like",
+			});
+			await notification.save();
 
-
-    } catch (error) {
-        console.log("Error in likeunlikepost", error.message);
-        return res.status(500).json({ error: "error in likingunliking post" })
-    }
-}
+			const updatedLikes = post.likes;
+			res.status(200).json(updatedLikes);
+		}
+	} catch (error) {
+		console.log("Error in likeUnlikePost controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
 
 const getAllPosts = async (req, res) => {
     try {

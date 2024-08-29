@@ -13,7 +13,7 @@ import express from "express";
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js';
 import postRoutes from './routes/postRoutes.js'
-
+import notificationRoutes from './routes/notificationRoutes.js'
 
 import connectDb from './db/dbConnect.js';
 import cookieParser from 'cookie-parser';
@@ -29,6 +29,7 @@ app.use(cookieParser())
 app.use('/api/auth', (authRoutes))
 app.use('/api/users', (userRoutes))
 app.use('/api/posts', (postRoutes))
+app.use('/api/notification', (notificationRoutes))
 
 app.listen(port, () => {
     console.log(`server runnning on port ${port}`);

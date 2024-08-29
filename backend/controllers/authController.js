@@ -57,11 +57,15 @@ const userSignUp = async (req, res) => {
 const userLogIn = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username, email });
         const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
 
-        if (!user || !isPasswordCorrect) {
-            return res.status(400).json({ error: "Invalid credentials" })
+        if (!user) {
+            return res.status(404).json({ error: "user not found or invalid username/email" })
+        }
+
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ error: "Password incorrect" })
         }
 
         generateTokenAndSetCookie(user._id, res);
