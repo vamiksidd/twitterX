@@ -1,40 +1,44 @@
-import User from "../models/userModel.js"
-import bcrypt from 'bcryptjs'
 import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
+import User from "../models/userModel.js";
+import bcrypt from "bcryptjs";
 
-const userSignUp = async (req, res) => {
+export const signup = async (req, res) => {
     try {
         const { fullName, username, email, password } = req.body;
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            throw new Error('Email not valid')
+            return res.status(400).json({ error: "Invalid email format" });
         }
 
-        const userEmail = await User.findOne({ email });
-        const userName = await User.findOne({ username });
-        if (userEmail) {
-            return res.status(400).json({ message: "email already exist" })
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: "Username is already taken" });
         }
-        if (userName) {
-            return res.status(400).json({ message: "username already exist" })
+
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail) {
+            return res.status(400).json({ error: "Email is already taken" });
         }
+
         if (password.length < 6) {
-            return res.status(400).json({ error: "password length must be greater than or equal to 6" })
+            return res.status(400).json({ error: "Password must be at least 6 characters long" });
         }
 
         const salt = await bcrypt.genSalt(10);
-
         const hashedPassword = await bcrypt.hash(password, salt);
+
         const newUser = new User({
             fullName,
             username,
             email,
-            password: hashedPassword
-        })
+            password: hashedPassword,
+        });
+
         if (newUser) {
-            generateTokenAndSetCookie(newUser._id, res)
+            generateTokenAndSetCookie(newUser._id, res);
             await newUser.save();
+
             return res.status(201).json({
                 _id: newUser._id,
                 fullName: newUser.fullName,
@@ -43,33 +47,30 @@ const userSignUp = async (req, res) => {
                 followers: newUser.followers,
                 following: newUser.following,
                 profileImg: newUser.profileImg,
-                coverImg: newUser.coverImg
-            })
+                coverImg: newUser.coverImg,
+            });
         } else {
-            res.status(400).json({ error: 'Invalid user data' })
+            res.status(400).json({ error: "Invalid user data" });
         }
+    } catch (error) {
+        console.log("Error in signup controller", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-    catch (err) {
-        console.log(err, 'Error in signup');
-    }
-}
+};
 
-const userLogIn = async (req, res) => {
+export const login = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
-        const user = await User.findOne({ username, email });
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
         const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
 
-        if (!user) {
-            return res.status(404).json({ error: "user not found or invalid username/email" })
-        }
-
-        if (!isPasswordCorrect) {
-            return res.status(400).json({ error: "Password incorrect" })
+        if (!user || !isPasswordCorrect) {
+            return res.status(400).json({ error: "Invalid username or password" });
         }
 
         generateTokenAndSetCookie(user._id, res);
-        return res.status(200).json({
+
+        res.status(200).json({
             _id: user._id,
             fullName: user.fullName,
             username: user.username,
@@ -77,37 +78,30 @@ const userLogIn = async (req, res) => {
             followers: user.followers,
             following: user.following,
             profileImg: user.profileImg,
-            coverImg: user.coverImg
-        })
+            coverImg: user.coverImg,
+        });
+    } catch (error) {
+        console.log("Error in login controller", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-    catch (err) {
-        console.log(err, 'Error in login');
-    }
-}
+};
 
-const userLogOut = (req, res) => {
+export const logout = async (req, res) => {
     try {
         res.cookie("jwt", "", { maxAge: 0 });
-        res.status(200).json({ message: "Logged out" })
+        res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
-        res.status(400).json({ error })
+        console.log("Error in logout controller", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
 
-const getUser = async (req, res) => {
+export const getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password")
-        res.status(200).json(user)
+        const user = await User.findById(req.user._id).select("-password");
+        res.status(200).json(user);
     } catch (error) {
-        res.status(500).json({ error: "Internal Server error" })
+        console.log("Error in getMe controller", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
-
-
-
-export {
-    userSignUp,
-    userLogIn,
-    userLogOut,
-    getUser
-}
+};

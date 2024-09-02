@@ -8,7 +8,7 @@ import { createPost, deletePost ,commentOnPost ,likeUnlikePost , getAllPosts ,ge
 
 router.get("/following" ,protectedRoute, getFollowingPosts)
 router.get("/likedposts/:id" , protectedRoute ,getLikedPosts)
-router.get("/allposts",protectedRoute , getAllPosts);
+router.get("/all",protectedRoute , getAllPosts);
 router.get("/userposts/:username",protectedRoute,getUserPosts)
 router.post("/create", protectedRoute, createPost)
 router.post("/like/:id",protectedRoute , likeUnlikePost)

@@ -8,7 +8,7 @@ cloudinary.config({
 })
 
 import express from "express";
-
+import path from "path";
 //Routes
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js';
@@ -18,19 +18,31 @@ import notificationRoutes from './routes/notificationRoutes.js'
 import connectDb from './db/dbConnect.js';
 import cookieParser from 'cookie-parser';
 
-const port = process.env.PORT || 8000
 const app = express()
 
-connectDb()
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
+const PORT = process.env.PORT || 5000;
+const __dirname = path.resolve();
 
-app.use('/api/auth', (authRoutes))
-app.use('/api/users', (userRoutes))
-app.use('/api/posts', (postRoutes))
-app.use('/api/notification', (notificationRoutes))
+app.use(express.json({ limit: "5mb" })); // to parse req.body
+// limit shouldn't be too high to prevent DOS
+app.use(express.urlencoded({ extended: true })); // to parse form data(urlencoded)
 
-app.listen(port, () => {
-    console.log(`server runnning on port ${port}`);
-})
+app.use(cookieParser());
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/notifications", notificationRoutes);
+
+if (process.env.NODE_ENV === "production") {
+	app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+	app.get("*", (req, res) => {
+		res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+	});
+}
+
+app.listen(PORT, () => {
+	console.log(`Server is running on port ${PORT}`);
+	connectDb();
+});

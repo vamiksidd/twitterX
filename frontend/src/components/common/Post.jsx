@@ -5,19 +5,79 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
+import LoadingSpinner from "./LoadingSpinner";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
+
+  const { data: authUser } = useQuery({
+    queryKey: ["authUser"],
+  });
+  const queryClient = useQueryClient();
+  const { mutate: deletePost, isPending } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/posts/delete/${post._id}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "something went wrong");
+        }
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Post deleted");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  function timeAgo(timestamp) {
+    const now = new Date();
+    const postDate = new Date(timestamp);
+    const secondsAgo = Math.floor((now - postDate) / 1000);
+
+    
+    const intervals = {
+        year: 365 * 24 * 60 * 60,
+        month: 30 * 24 * 60 * 60,
+        week: 7 * 24 * 60 * 60,
+        day: 24 * 60 * 60,
+        hour: 60 * 60,
+        minute: 60,
+        second: 1
+    };
+    
+    for (const [unit, value] of Object.entries(intervals)) {
+        const count = Math.floor(secondsAgo / value);
+        if (count >= 1) {
+            return count === 1 ? `1 ${unit} ago` : `${count} ${unit}s ago`;
+        }
+    }
+    
+    return "just now";
+}
+
+
   const postOwner = post.user;
   const isLiked = false;
 
-  const isMyPost = true;
+  const isMyPost = authUser._id === post.user._id ? true : false;
 
-  const formattedDate = "1h";
+  const formattedDate =  timeAgo(post.createdAt)
 
   const isCommenting = false;
 
-  const handleDeletePost = () => {};
+  const handleDeletePost = (e) => {
+    e.preventDefault();
+    deletePost();
+  };
 
   const handlePostComment = (e) => {
     e.preventDefault();
@@ -50,10 +110,14 @@ const Post = ({ post }) => {
             </span>
             {isMyPost && (
               <span className="flex justify-end flex-1">
-                <FaTrash
-                  className="cursor-pointer hover:text-red-500"
-                  onClick={handleDeletePost}
-                />
+                {!isPending ? (
+                  <FaTrash
+                    className="cursor-pointer hover:text-red-500"
+                    onClick={handleDeletePost}
+                  />
+                ) : (
+                  <LoadingSpinner size="sm" />
+                )}
               </span>
             )}
           </div>
