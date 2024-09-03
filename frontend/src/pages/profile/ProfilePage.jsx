@@ -3,9 +3,7 @@ import { Link } from "react-router-dom";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 
-// import Posts from "../../components/common/Posts";
-// import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
-// import EditProfileModal from "./EditProfileModal";
+
 
 import { Posts, ProfileHeaderSkeleton } from "../../components/components";
 import EditProfileModal from "./EditProfileModal";

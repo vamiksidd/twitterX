@@ -88,6 +88,45 @@ export const commentOnPost = async (req, res) => {
 	}
 };
 
+
+export const deleteComment = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.user._id;
+        const { text } = req.body;  // Assuming 'text' is sent in the request body
+
+        if (!text) {
+            return res.status(400).json({ error: "Text field is required" });
+        }
+
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // Find the index of the comment to delete
+        const commentIndex = post.comments.findIndex(
+            (comment) => comment.user.toString() === userId.toString() && comment.text === text
+        );
+
+        if (commentIndex === -1) {
+            return res.status(404).json({ error: "Comment not found or you are not authorized to delete it" });
+        }
+
+        // Remove the comment from the array
+        post.comments.splice(commentIndex, 1);
+        await post.save();
+
+        res.status(200).json({ message: "Comment deleted successfully", post });
+    } catch (error) {
+        console.error("Error in deleteComment controller: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+
+
 export const likeUnlikePost = async (req, res) => {
 	try {
 		const userId = req.user._id;
