@@ -6,6 +6,7 @@ const router = express.Router()
 
 
 router.get("/profile/:username", getUserProfile)
+// router.get("/allusers", getAllProfiles)
 router.get("/suggestion", protectedRoute, getSuggestedUser)
 router.post("/follow/:id", protectedRoute, followUnfollowUser)
 router.put("/update", protectedRoute, updateUserProfile)

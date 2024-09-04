@@ -102,8 +102,13 @@ const updateUserProfile = async (req, res) => {
 
     const userId = req.user._id;
 
+
     try {
         const user = await User.findById(userId);
+        const isUsernamePresent = await User.findOne({ username })
+        if (isUsernamePresent) {
+            return res.status(404).json({ message: "Username already exist" });
+        }
         if (!user) return res.status(404).json({ message: "User not found" });
 
         //password update
@@ -140,7 +145,7 @@ const updateUserProfile = async (req, res) => {
             const uploadResponse = await cloudinary.uploader.upload(coverImg)
             coverImg = uploadResponse.secure_url
         }
-
+        user.username = username || user.username;
         user.fullName = fullName || user.fullName;
         user.email = email || user.email;
         user.bio = bio || user.bio;

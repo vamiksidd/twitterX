@@ -18,7 +18,6 @@ const Post = ({ post }) => {
   const isLiked = post.likes.includes(authUser._id);
 
   const isMyPost = authUser._id === post.user._id;
-
   function timeAgo(timestamp) {
     const now = new Date();
     const postDate = new Date(timestamp);
@@ -43,12 +42,12 @@ const Post = ({ post }) => {
 
     return "just now";
   }
-  const formattedDate = timeAgo(post.createdAt);
+  const formattedDate = timeAgo(post.createdAt)
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       try {
-        const res = await fetch(`/api/posts/${post._id}`, {
+        const res = await fetch(`/api/posts/delete/${post._id}`, {
           method: "DELETE",
         });
         const data = await res.json();
